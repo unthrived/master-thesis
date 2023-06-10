@@ -7,7 +7,7 @@ Pilot01
 decoding-toolbox_matlab/
 decoding_toolbox_py/
 timeseries2.mat
-
+.DS_store
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

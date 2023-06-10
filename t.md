@@ -1,0 +1,1 @@
+forward enc model at the peaks
