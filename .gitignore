@@ -2,10 +2,11 @@
 
 .vscode/*
 catboost_info/*
-Cond_CJ_EEG
+Cond_CJ_EEG/
 Pilot01
-
-
+decoding-toolbox_matlab/
+decoding_toolbox_py/
+timeseries2.mat
 
 
 # Byte-compiled / optimized / DLL files
