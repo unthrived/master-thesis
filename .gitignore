@@ -5,7 +5,7 @@ catboost_info/*
 Cond_CJ_EEG/
 Pilot01
 decoding-toolbox_matlab/
-decoding_toolbox_py/
+# decoding_toolbox_py/
 timeseries2.mat
 .DS_store
 

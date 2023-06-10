@@ -225,36 +225,6 @@ def CV_encoder(design, Y, sel_t , cfg, FoldsIdx):
     
     return Xhat
 
-def tt_encoder(design, Y, sel_t , cfg):
-
-    numC = design.shape[0]
-    numN = Y.shape[2]
-
-    Xhat = np.zeros([numC,numN])
-    Xhat_centered = 0*Xhat.copy()
-
-    
-
-    # # Output matrix
-    # dat = dict()
-    # dat['Y_train'] = np.squeeze(Y[:,sel_t, FoldsIdx[ifold]['train_index']])
-    # idesign = design[:,FoldsIdx[ifold]['train_index']]
-    # dat['Y_test'] = np.squeeze(Y[:,sel_t, FoldsIdx[ifold]['test_index']])
-# 
-    # if 'cfgE' not in cfg:
-    #     cfgE = {'gamma': 0.01, 'demean' : True, 'returnPattern' : True}
-    # else:
-    #     cfgE = cfg['cfgE']
-    # decoder = train_encoder(idesign, dat['Y_train'], cfgE)
-    # if 'cfgD' not in cfg:
-    #     cfgD = {'demean' : 'traindata'}
-    # else:
-    #     cfgD = cfg['cfgD']
-    #     
-    # Xhat[:,FoldsIdx[ifold]['test_index']] = test_encoder( decoder, dat['Y_test'], cfgD) 
-    
-    return Xhat
-
 # Prepared to perform cross-validation and temporal generalization of the decoder
 def CV_TG_encoder(design, Y, sel_t, cfg, FoldsIdx):
 
