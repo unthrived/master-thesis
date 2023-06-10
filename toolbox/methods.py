@@ -129,7 +129,7 @@ def train_stim_ori(all_st_rawdata, raw_predicts = False):
         CONDS = np.unique(G[subj])
         nConds = CONDS.size
         nfold = 5
-        FoldsIdx = CreateFolds(G[subj], X, nfold)
+        FoldsIdx = dt.CreateFolds(G[subj], X, nfold)
         
         design, sortedesign = dt.stim_features(phi, cfg_stim)
         
@@ -138,7 +138,7 @@ def train_stim_ori(all_st_rawdata, raw_predicts = False):
             cfg = dict()
             cfg['cfgE'] = {'gamma': 0.01, 'demean' : True, 'returnPattern' : True}
             cfg['cfgD'] = {'demean' : 'traindata'}
-            Xhat[:,:,it] = CV_encoder(design, X, it, cfg, FoldsIdx)
+            Xhat[:,:,it] = dt.CV_encoder(design, X, it, cfg, FoldsIdx)
         preds[subj] = Xhat
     if raw_predicts:
         return preds
@@ -182,7 +182,7 @@ def train_condv(all_rawdata, raw_predicts = False):
         CONDS = np.unique(G[subj])
         nConds = CONDS.size
         nfold = 5
-        FoldsIdx = CreateFolds(G[subj], X, nfold)
+        FoldsIdx = dt.CreateFolds(G[subj], X, nfold)
         
         design, sortedesign = dt.stim_features(phi, cfg_stim)
         
@@ -191,7 +191,7 @@ def train_condv(all_rawdata, raw_predicts = False):
             cfg = dict()
             cfg['cfgE'] = {'gamma': 0.01, 'demean' : True, 'returnPattern' : True}
             cfg['cfgD'] = {'demean' : 'traindata'}
-            Xhat[:,:,it] = CV_encoder(design, X, it, cfg, FoldsIdx)
+            Xhat[:,:,it] = dt.CV_encoder(design, X, it, cfg, FoldsIdx)
         preds[subj] = Xhat
     if raw_predicts:
         return preds
@@ -235,7 +235,7 @@ def train_main_ori(all_rawdata, raw_predicts = False, use_orientation = 0):
         CONDS = np.unique(G[subj])
         nConds = CONDS.size
         nfold = 5
-        FoldsIdx = CreateFolds(G[subj], X, nfold)
+        FoldsIdx = dt.CreateFolds(G[subj], X, nfold)
         
         design, sortedesign = dt.stim_features(phi, cfg_stim)
         
@@ -244,7 +244,7 @@ def train_main_ori(all_rawdata, raw_predicts = False, use_orientation = 0):
             cfg = dict()
             cfg['cfgE'] = {'gamma': 0.01, 'demean' : True, 'returnPattern' : True}
             cfg['cfgD'] = {'demean' : 'traindata'}
-            Xhat[:,:,it] = CV_encoder(design, X, it, cfg, FoldsIdx)
+            Xhat[:,:,it] = dt.CV_encoder(design, X, it, cfg, FoldsIdx)
         preds[subj] = Xhat
     if raw_predicts:
         return preds
