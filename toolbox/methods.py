@@ -2,8 +2,8 @@
 import os
 import mne
 import numpy as np
-import DecToolbox as dt
-from DecToolbox import CV_encoder, CreateFolds
+import decoding_toolbox_py.Helper_funcs.DecToolbox as dt
+
 
 
 '''VARIBLES'''
