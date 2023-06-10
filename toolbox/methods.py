@@ -4,8 +4,6 @@ import mne
 import numpy as np
 import decoding_toolbox_py.Helper_funcs.DecToolbox as dt
 
-
-
 '''VARIBLES'''
 
 amount_of_subjects = 26 # Change the range so the process is faster
@@ -21,6 +19,9 @@ x_labels = np.array(angles)
 
 resample = False # speeds up the procees but showing worse results overall
 if resample: resample_frequency = 20 # in Hz, original freq is 500Hz
+
+
+''' Variables for the decoding toolbox '''
 
 cfg_stim = dict()
 cfg_stim['kappa'] = 4
