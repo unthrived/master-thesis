@@ -159,6 +159,7 @@ def train_stim_ori(all_st_rawdata, raw_predicts = False):
         return Xhat_centeredmean
     
 def train_condv(all_rawdata, raw_predicts = False):
+    '''not working'''
     nSubj = len(all_rawdata)
     preds = [None] * nSubj
     G = [None] * nSubj
@@ -212,6 +213,7 @@ def train_condv(all_rawdata, raw_predicts = False):
         return Xhat_centeredmean
     
 def train_main_ori(all_rawdata, raw_predicts = False, use_orientation = 0):
+    '''Forward encoding model for the main task (6 orientations)'''
     nSubj = len(all_rawdata)
     preds = [None] * nSubj
     G = [None] * nSubj
@@ -223,6 +225,7 @@ def train_main_ori(all_rawdata, raw_predicts = False, use_orientation = 0):
         X = np.einsum('kji->jik', X)        
         #print(X.shape)
         
+        # Important line to delete the eye channel
         X = np.delete(X, 25, axis=0)
 
         y = np.array(all_rawdata[subj]['metadata'][orientations[use_orientation]])
@@ -251,13 +254,13 @@ def train_main_ori(all_rawdata, raw_predicts = False, use_orientation = 0):
         return preds
     else:
         m_centered = np.zeros((numC,numC, numT, nSubj))
-        for ival, isubj in enumerate(subjs_list):
-            Xhat = preds[ival]
+        for subj in range(nSubj):
+            Xhat = preds[subj]
             Xhat_centered = 0*Xhat.copy()
             
             for ic in range(numC): # here trials that match similar label orientation are shifted together y positions (np.roll)
-                Xhat_centered[:, G[ival] == ic,:] = np.roll(Xhat[:,G[ival] == ic,:], -ic, axis = 0)
-                m_centered[:,ic, :, ival] =  np.mean( Xhat_centered[:,  G[ival] == ic, :], axis = 1)
+                Xhat_centered[:, G[subj] == ic,:] = np.roll(Xhat[:,G[subj] == ic,:], -ic, axis = 0)
+                m_centered[:,ic, :, subj] =  np.mean( Xhat_centered[:,  G[subj] == ic, :], axis = 1)
 
         Xhat_centeredmean = np.mean( m_centered, axis = 1)
         Xhat_centeredmean = np.mean( Xhat_centeredmean, axis = 2)

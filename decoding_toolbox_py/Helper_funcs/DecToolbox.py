@@ -125,7 +125,6 @@ def train_encoder(X, Y, cfg):
     for ic in range(numC):
         # Estimate leadfield for current channel
         l = ((X[:,ic].T @ X[:,ic])**-1) * (X[:,[ic]].T @ Y) 
-
         if cfg['returnPattern']:
             decoder['pattern'][:, ic] = l
         # Estimate noise (what is not explained by the regressors coefficients)
@@ -135,7 +134,6 @@ def train_encoder(X, Y, cfg):
         #  Regularize
         S = (1-gamma)*S + gamma*np.eye(numF) * np.trace(S)/numF #% [w,d] = eig(S);  eigenvalues -> pdiag(d)
         decoder['W'][ic, :] = np.dot(l,np.linalg.inv(S))
-
     return decoder
 
 
