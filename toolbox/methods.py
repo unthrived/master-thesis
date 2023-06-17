@@ -2,6 +2,7 @@
 import os
 import mne
 import numpy as np
+import random
 import decoding_toolbox_py.Helper_funcs.DecToolbox as dt
 
 '''VARIBLES'''
@@ -266,3 +267,62 @@ def train_main_ori(all_rawdata, raw_predicts = False, use_orientation = 0):
         Xhat_centeredmean = np.mean( Xhat_centeredmean, axis = 2)
         
         return Xhat_centeredmean
+    
+def train_main_ori_shuffled(all_rawdata, raw_predicts = False, use_orientation = 0):
+    '''Forward encoding model for the main task (6 orientations)'''
+    nSubj = len(all_rawdata)
+    preds = [None] * nSubj
+    G = [None] * nSubj
+    orientations = ['o1', 'o2', 'o3', 'o4', 'o5', 'o6']
+    for subj in range(nSubj):
+        
+        X = all_rawdata[subj]['epoch_dat']
+        #print(X.shape)
+        X = np.einsum('kji->jik', X)        
+        #print(X.shape)
+        
+        # Important line to delete the eye channel
+        X = np.delete(X, 25, axis=0)
+
+        y = np.array(all_rawdata[subj]['metadata'][orientations[use_orientation]])
+
+        random.shuffle(y)
+
+        y = y*180./np.pi
+        y = np.digitize(y, bins = np.array(angles))-1.
+        phi = y * (180./numC)
+        numF, numT, numN = X.shape
+
+        G[subj] = y.copy() 
+        
+        CONDS = np.unique(G[subj])
+        nConds = CONDS.size
+        nfold = 5
+        FoldsIdx = dt.CreateFolds(G[subj], X, nfold)
+        
+        design, sortedesign = dt.stim_features(phi, cfg_stim)
+        
+        Xhat = np.zeros([numC,numN, numT])
+        for it in range(numT):
+            cfg = dict()
+            cfg['cfgE'] = {'gamma': 0.01, 'demean' : True, 'returnPattern' : True}
+            cfg['cfgD'] = {'demean' : 'traindata'}
+            Xhat[:,:,it] = dt.CV_encoder(design, X, it, cfg, FoldsIdx)
+        preds[subj] = Xhat
+    if raw_predicts:
+        return preds
+    else:
+        m_centered = np.zeros((numC,numC, numT, nSubj))
+        for subj in range(nSubj):
+            Xhat = preds[subj]
+            Xhat_centered = 0*Xhat.copy()
+            
+            for ic in range(numC): # here trials that match similar label orientation are shifted together y positions (np.roll)
+                Xhat_centered[:, G[subj] == ic,:] = np.roll(Xhat[:,G[subj] == ic,:], -ic, axis = 0)
+                m_centered[:,ic, :, subj] =  np.mean( Xhat_centered[:,  G[subj] == ic, :], axis = 1)
+
+        Xhat_centeredmean = np.mean( m_centered, axis = 1)
+        Xhat_centeredmean = np.mean( Xhat_centeredmean, axis = 2)
+        
+        return Xhat_centeredmean
+
