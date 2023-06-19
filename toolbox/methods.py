@@ -422,7 +422,54 @@ def train_main_ori_shuffled(all_rawdata, raw_predicts = False, use_orientation =
         return Xhat_centeredmean
 
 
-def train_timepoints(X, y, verbose=False, display_roc=False, acc_only = False):
+def train_timepoints(X, y, verbose=False, display_roc=False, acc_only = True):
+    '''We use standard random forest classifier to train the data'''
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
+    minority = np.unique(y_train,return_counts=True)[1][0]
+    mayority = np.unique(y_train,return_counts=True)[1][1]
+    # print(mayority/minority)
+    class_weight = {
+        0: 1.0,  
+        1: mayority/minority
+    }
+    sample_weights = np.array([class_weight[label] for label in y_train])
+    
+    # clf = CatBoostClassifier(task_type = 'GPU')
+    # clf = RandomForestClassifier(random_state=0, n_jobs=-1)
+    clf = RandomForestClassifier(n_jobs=-1)
+    # clf = LinearSVC(random_state=0, loss="hinge") # Faster than Random Forest
+    clf.fit(X_train, y_train,
+            sample_weight=sample_weights
+            )
+
+    y_pred = clf.predict(X_test)    
+    if verbose:
+        print(classification_report(y_test, y_pred))
+        print(np.unique(y_test, return_counts=True))
+        print(np.unique(y_pred, return_counts=True))
+    accuracy = accuracy_score(y_test, y_pred)
+    f1 = f1_score(y_test, y_pred)
+    roc = roc_auc_score(y_test, y_pred)
+    # features = clf.feature_importances_
+    if display_roc:
+        # I think this is not working
+        from sklearn.metrics import roc_curve
+        from sklearn.metrics import RocCurveDisplay
+        fpr, tpr, _ = roc_curve(y_test, y_pred, pos_label=clf.classes_[1])
+        roc_display = RocCurveDisplay(fpr=fpr, tpr=tpr).plot()
+        return roc_display
+    # if np.unique(y_pred, return_counts=True)[1].shape[0] == 1:
+    #     unique_pred_0 = 0
+    #     unique_pred_1 = np.unique(y_pred, return_counts=True)[1][0]  
+    # else:
+    #     unique_pred_0 = np.unique(y_pred, return_counts=True)[1][0]
+    #     unique_pred_1 = np.unique(y_pred, return_counts=True)[1][1]
+    if acc_only:
+        return accuracy
+    return accuracy, f1, roc #, features
+
+def train_timepoints_svc(X, y, verbose=False, display_roc=False, acc_only = True):
+    '''Same as train_timepoints but using SVC instead of Random Forest, faster but worse results'''
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
 
     minority = np.unique(y_train,return_counts=True)[1][0]
@@ -437,6 +484,7 @@ def train_timepoints(X, y, verbose=False, display_roc=False, acc_only = False):
     # clf = CatBoostClassifier(task_type = 'GPU')
     clf = RandomForestClassifier(random_state=0, n_jobs=-1)
     clf = RandomForestClassifier(n_jobs=-1)
+    clf = SVC(kernel='linear', probability=True, random_state=0)
     # clf = LinearSVC(random_state=0, loss="hinge") # Faster than Random Forest
     clf.fit(X_train, y_train,
             sample_weight=sample_weights
