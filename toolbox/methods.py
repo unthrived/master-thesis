@@ -4,6 +4,18 @@ import mne
 import numpy as np
 import random
 import decoding_toolbox_py.Helper_funcs.DecToolbox as dt
+from sklearn.svm import SVC
+# from pyrcn.echo_state_network import ESNClassifier
+from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.ensemble import RandomForestClassifier,AdaBoostClassifier,GradientBoostingClassifier
+from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
+from catboost import CatBoostClassifier
+# from xgboost import XGBClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import classification_report
+from sklearn.svm import SVC
+from sklearn.svm import LinearSVC
+
 
 '''VARIBLES'''
 
@@ -48,7 +60,7 @@ def read_data(
         amount_of_subjects = 1,
         task = 'main'
         ):
-    if amount_of_subjects < 6:
+    if amount_of_subjects < 6: # we have to do this so the cardinality matches because theres no subject 6
         subjs_list = ['s{:02d}'.format(i) for i in range(1, amount_of_subjects+1)] 
     elif amount_of_subjects > 26:
         amount_of_subjects = 26
@@ -106,6 +118,88 @@ def read_data(
         return all_epochs, all_rawdata
     else:
         return all_st_epochs, all_st_rawdata
+
+def read_data_repetitions(
+        repetitions=True,
+        repetition_index=1,
+        resample=False,
+        resample_frequency = 20,
+        amount_of_subjects = 1,
+        task = 'main'
+        ):
+    if amount_of_subjects < 6:
+        subjs_list = ['s{:02d}'.format(i) for i in range(1, amount_of_subjects+1)] 
+    elif amount_of_subjects > 26:
+        amount_of_subjects = 26
+        subjs_list_5 = ['s{:02d}'.format(i) for i in range(1, 6)]
+        subjs_list = ['s{:02d}'.format(i) for i in range(7, amount_of_subjects+2)]
+        subjs_list = subjs_list_5 + subjs_list
+    else:
+        subjs_list_5 = ['s{:02d}'.format(i) for i in range(1, 6)]
+        subjs_list = ['s{:02d}'.format(i) for i in range(7, amount_of_subjects+2)]
+        subjs_list = subjs_list_5 + subjs_list
+
+    path = 'Cond_CJ_EEG'
+
+    epochs = []
+    all_epochs = []
+    all_rawdata = []
+    all_st_epochs = []
+    all_st_rawdata = []
+    for subject_id in subjs_list:
+        preproc_path = os.path.join(path, subject_id)
+
+        if task == 'main':
+            epoch = mne.read_epochs(os.path.join(preproc_path, 'main_epo.fif'), verbose=False)
+            
+            if resample: 
+                print('Frequency before:', epoch.info['sfreq'])
+                epoch = epoch.resample(resample_frequency)
+                print('Frequency after:' ,epoch.info['sfreq'])
+
+            # epochs.append(epoch.average())
+            all_epochs.append(epoch)
+            if repetitions:
+                if repetition_index == 0:
+                    repetition_values = [0]  # Use repetition 0
+                else:
+                    repetition_values = [1, 2]  # Use repetitions 1 and 2
+                all_rawdata.append({
+                    'epoch_dat': epoch.get_data()[np.isin(epoch.metadata['nrep'], repetition_values), :, :],
+                    'metadata': epoch.metadata[np.isin(epoch.metadata['nrep'], repetition_values)]
+                })
+            else:
+                all_rawdata.append({
+                    'epoch_dat': epoch.get_data(), 
+                    'metadata': epoch.metadata
+                    })
+            
+        if task == 'stim':
+        
+            st_epoch = mne.read_epochs(os.path.join(preproc_path, 'mainstim_epo.fif'), verbose=False)
+            # print(st_epoch.info['sfreq'])
+            if resample: 
+                print('Frequency before:', st_epoch.info['sfreq'])
+                st_epoch = st_epoch.resample(resample_frequency)
+                print('Frequency after:' ,st_epoch.info['sfreq'])
+                
+            all_st_epochs.append(st_epoch)
+            if repetitions:
+                if repetition_index == 0:
+                    repetition_values = [0]  # Use repetition 0
+                else:
+                    repetition_values = [1, 2]  # Use repetitions 1 and 2
+                all_st_rawdata.append({
+                    'epoch_dat': st_epoch.get_data()[np.isin(st_epoch.metadata['nrep'], repetition_values), :, :],
+                    'metadata': st_epoch.metadata[np.isin(st_epoch.metadata['nrep'], repetition_values)]
+                })
+                all_st_rawdata.append({'epoch_dat': st_epoch.get_data(), 'metadata': st_epoch.metadata})
+    if task == 'main':
+        return all_epochs, all_rawdata
+    else:
+        return all_st_epochs, all_st_rawdata
+
+
 
 def train_stim_ori(all_st_rawdata, raw_predicts = False):
     '''Train procedure used for forward encoding model'''
@@ -267,7 +361,8 @@ def train_main_ori(all_rawdata, raw_predicts = False, use_orientation = 0):
         Xhat_centeredmean = np.mean( Xhat_centeredmean, axis = 2)
         
         return Xhat_centeredmean
-    
+
+
 def train_main_ori_shuffled(all_rawdata, raw_predicts = False, use_orientation = 0):
     '''Forward encoding model for the main task (6 orientations)'''
     nSubj = len(all_rawdata)
@@ -326,3 +421,49 @@ def train_main_ori_shuffled(all_rawdata, raw_predicts = False, use_orientation =
         
         return Xhat_centeredmean
 
+
+def train_timepoints(X, y, verbose=False, display_roc=False, acc_only = False):
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
+
+    minority = np.unique(y_train,return_counts=True)[1][0]
+    mayority = np.unique(y_train,return_counts=True)[1][1]
+    # print(mayority/minority)
+    class_weight = {
+        0: 1.0,  
+        1: mayority/minority
+    }
+    sample_weights = np.array([class_weight[label] for label in y_train])
+    
+    # clf = CatBoostClassifier(task_type = 'GPU')
+    clf = RandomForestClassifier(random_state=0, n_jobs=-1)
+    clf = RandomForestClassifier(n_jobs=-1)
+    # clf = LinearSVC(random_state=0, loss="hinge") # Faster than Random Forest
+    clf.fit(X_train, y_train,
+            sample_weight=sample_weights
+            )
+
+    y_pred = clf.predict(X_test)    
+    if verbose:
+        print(classification_report(y_test, y_pred))
+        print(np.unique(y_test, return_counts=True))
+        print(np.unique(y_pred, return_counts=True))
+    accuracy = accuracy_score(y_test, y_pred)
+    f1 = f1_score(y_test, y_pred)
+    roc = roc_auc_score(y_test, y_pred)
+    # features = clf.feature_importances_
+    if display_roc:
+        # I think this is not working
+        from sklearn.metrics import roc_curve
+        from sklearn.metrics import RocCurveDisplay
+        fpr, tpr, _ = roc_curve(y_test, y_pred, pos_label=clf.classes_[1])
+        roc_display = RocCurveDisplay(fpr=fpr, tpr=tpr).plot()
+        return roc_display
+    # if np.unique(y_pred, return_counts=True)[1].shape[0] == 1:
+    #     unique_pred_0 = 0
+    #     unique_pred_1 = np.unique(y_pred, return_counts=True)[1][0]  
+    # else:
+    #     unique_pred_0 = np.unique(y_pred, return_counts=True)[1][0]
+    #     unique_pred_1 = np.unique(y_pred, return_counts=True)[1][1]
+    if acc_only:
+        return accuracy
+    return accuracy, f1, roc #, features
