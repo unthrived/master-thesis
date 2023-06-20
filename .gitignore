@@ -1,7 +1,7 @@
 # Thesis gitignore
 
-.vscode/*
-catboost_info/*
+.vscode/
+catboost_info/
 Cond_CJ_EEG/
 Pilot01
 decoding-toolbox_matlab/
