@@ -8,6 +8,7 @@ decoding-toolbox_matlab/
 # decoding_toolbox_py/
 timeseries2.mat
 .DS_store
+2_data_exploration.ipynb
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
