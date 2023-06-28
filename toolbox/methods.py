@@ -126,6 +126,26 @@ def read_data(
         return all_st_epochs, all_st_rawdata
         # return all_st_rawdata
 
+def time_labels (
+        task = 'main',
+        resample = False,
+        resample_frequency = 20,
+        ):
+    path = 'Cond_CJ_EEG'
+    subject_id = 's01'
+    preproc_path = os.path.join(path, subject_id)
+    if task == 'main':
+        epoch = mne.read_epochs(os.path.join(preproc_path, 'main_epo.fif'), verbose=False)
+        if resample: 
+            epoch = epoch.resample(resample_frequency)
+        time_labels = epoch.times
+    if task == 'stim':
+        st_epoch = mne.read_epochs(os.path.join(preproc_path, 'mainstim_epo.fif'), verbose=False)
+        if resample: 
+            st_epoch = st_epoch.resample(resample_frequency)
+        time_labels = st_epoch.times
+    return time_labels
+
 def read_data_repetitions(
         repetitions=True,
         repetition_index=1,
@@ -201,6 +221,7 @@ def read_data_repetitions(
                     'epoch_dat': st_epoch.get_data()[np.isin(st_epoch.metadata['nrep'], repetition_values), :, :],
                     'metadata': st_epoch.metadata[np.isin(st_epoch.metadata['nrep'], repetition_values)]
                 })
+            else:
                 all_st_rawdata.append({'epoch_dat': st_epoch.get_data(), 'metadata': st_epoch.metadata})
     if task == 'main':
         return all_rawdata
@@ -211,7 +232,7 @@ def read_data_repetitions(
 def read_data_repetitions_decision(
         repetitions=True,
         repetition_index=1,
-        decision=0,
+        decision_index=0,
         resample=False,
         resample_frequency = 20,
         amount_of_subjects = 1,
@@ -255,9 +276,10 @@ def read_data_repetitions_decision(
                     repetition_values = [0]  # Use repetition 0
                 else:
                     repetition_values = [1, 2]  # Use repetitions 1 and 2
+                decision_values = [decision_index]
                 all_rawdata.append({
-                    'epoch_dat': epoch.get_data()[np.isin(epoch.metadata['nrep'], repetition_values), :, :],
-                    'metadata': epoch.metadata[np.isin(epoch.metadata['nrep'], repetition_values)]
+                    'epoch_dat': epoch.get_data()[np.isin(epoch.metadata['nrep'], repetition_values)&np.isin(epoch.metadata['deci-1'], decision_values), :, :],
+                    'metadata': epoch.metadata[np.isin(epoch.metadata['nrep'], repetition_values)&np.isin(epoch.metadata['deci-1'], decision_values)]
                 })
             else:
                 all_rawdata.append({
@@ -280,10 +302,12 @@ def read_data_repetitions_decision(
                     repetition_values = [0]  # Use repetition 0
                 else:
                     repetition_values = [1, 2]  # Use repetitions 1 and 2
+                decision_values = [decision_index]
                 all_st_rawdata.append({
-                    'epoch_dat': st_epoch.get_data()[np.isin(st_epoch.metadata['nrep'], repetition_values), :, :],
-                    'metadata': st_epoch.metadata[np.isin(st_epoch.metadata['nrep'], repetition_values)]
+                    'epoch_dat': st_epoch.get_data()[np.isin(st_epoch.metadata['nrep'], repetition_values)&np.isin(st_epoch.metadata['deci-1'], decision_values), :, :],
+                    'metadata': st_epoch.metadata[np.isin(st_epoch.metadata['nrep'], repetition_values)&np.isin(st_epoch.metadata['deci-1'], decision_values)]
                 })
+            else: 
                 all_st_rawdata.append({'epoch_dat': st_epoch.get_data(), 'metadata': st_epoch.metadata})
     if task == 'main':
         return all_rawdata
