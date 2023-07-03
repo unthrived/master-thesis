@@ -500,7 +500,7 @@ def train_timepoints(X, y, verbose=False, display_roc=False, acc_only = True):
     clf = RandomForestClassifier(n_jobs=-1)
     # clf = LinearSVC(random_state=0, loss="hinge") # Faster than Random Forest
     clf.fit(X_train, y_train
-            ,sample_weight=sample_weights
+            # ,sample_weight=sample_weights
             )
 
     y_pred = clf.predict(X_test)    
