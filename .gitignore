@@ -9,6 +9,9 @@ decoding-toolbox_matlab/
 timeseries2.mat
 .DS_store
 2_data_exploration.ipynb
+outline.md
+doubts.md
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
