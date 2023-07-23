@@ -315,6 +315,7 @@ def read_data_repetitions_decision(
         return all_st_rawdata
 
 
+
 def train_stim_ori(all_st_rawdata, raw_predicts = False):
     '''Train procedure used for forward encoding model with st data'''
     nSubj = len(all_st_rawdata)
@@ -545,10 +546,10 @@ def train_timepoints_svc(X, y, verbose=False, display_roc=False, acc_only = True
     # clf = CatBoostClassifier(task_type = 'GPU')
     clf = RandomForestClassifier(random_state=0, n_jobs=-1)
     clf = RandomForestClassifier(n_jobs=-1)
-    clf = SVC(kernel='linear', probability=True, random_state=0)
+    clf = SVC(kernel='linear')
     # clf = LinearSVC(random_state=0, loss="hinge") # Faster than Random Forest
     clf.fit(X_train, y_train
-            # ,sample_weight=sample_weights
+            ,sample_weight=sample_weights
             )
 
     y_pred = clf.predict(X_test)    
