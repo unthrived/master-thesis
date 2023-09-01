@@ -9,10 +9,9 @@ decoding-toolbox_matlab/
 timeseries2.mat
 .DS_store
 2_data_exploration.ipynb
-results_deci_rf/
-results_deci_svc/
-results_resp_rf/
-results_resp_svc/
+
+
+timepoint_results/
 
 outline.md
 
